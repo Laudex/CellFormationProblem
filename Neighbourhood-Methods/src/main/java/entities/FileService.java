@@ -6,9 +6,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 
 public class FileService {
@@ -43,30 +41,34 @@ public class FileService {
             return null;
         }
     }
-    public void writeToFile(String pathToFile, Result finalResult) {
-        try {
-            BufferedWriter writer = Files.newBufferedWriter(Paths.get(pathToFile));
-            StringBuilder stringBuilder = new StringBuilder();
-            int clusterId = 1;
-            for (Matrix matrix : finalResult.getCluster()) {
-                for (Integer machine : matrix.getMatrix().keySet()){
-                    stringBuilder.append(machine + "_" + clusterId + " ");
-                }
-                clusterId++;
+    public void writeToFile(String path, ArrayList<Cluster> clusters){
+        TreeMap<Integer, Integer> machinesMapping = new TreeMap<>();
+        TreeMap<Integer, Integer> partsMapping = new TreeMap<>();
+        int clusterCount = 0;
+        for (Cluster cluster : clusters){
+            clusterCount++;
+            for (Integer machine : cluster.getMachines()){
+                machinesMapping.put(machine, clusterCount);
             }
-            clusterId = 1;
+            for (Integer part : cluster.getParts()){
+                partsMapping.put(part, clusterCount);
+            }
+
+        }
+        try {
+            BufferedWriter writer = Files.newBufferedWriter(Paths.get(path));
+            StringBuilder stringBuilder = new StringBuilder();
+            for (Map.Entry<Integer, Integer> entry : machinesMapping.entrySet()){
+                stringBuilder.append(entry.getKey() + "_" + entry.getValue() + " ");
+            }
             stringBuilder.append("\n");
-            for (Matrix matrix : finalResult.getCluster()){
-                List<Integer> parts = matrix.getColumnIndexes();
-                for (Integer part : parts){
-                    stringBuilder.append(part + "_" + clusterId + " ");
-                }
-                clusterId++;
+            for (Map.Entry<Integer, Integer> entry : partsMapping.entrySet()){
+                stringBuilder.append(entry.getKey() + "_" + entry.getValue() + " ");
             }
             writer.write(stringBuilder.toString());
             writer.close();
-        } catch (IOException ex) {
-            System.out.println(ex.getMessage());
+        } catch (IOException e){
+            System.out.println(e.getMessage());
         }
     }
 }
